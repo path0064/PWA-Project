@@ -62,3 +62,5 @@ function createResults(moviesArray) {
   console.log(`from createResults: `);
   console.log(moviesArray);
 }
+
+//test
