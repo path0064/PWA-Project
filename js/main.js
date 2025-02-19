@@ -1,13 +1,39 @@
-const token = "";
+import token from "./apikey.js";
 
 //IIFE
 (async () => {
   console.log("main.js loaded!");
-  document
-    .getElementById("search-form")
-    .addEventListener("submit", handleSearchSubmit);
+  setUpWorker();
+  let searchForm = document.getElementById("search-form");
+  if (searchForm) searchForm.addEventListener("submit", handleSearchSubmit);
   // const input = getSearchQuery();
+  pageSpecific();
 })();
+
+function setUpWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+}
+
+function pageSpecific() {
+  let id = document.body.id; // checks the id of the body element, and then matches the id name to the js file
+  switch (id) {
+    case "home":
+      import("./index.js");
+      break;
+    case "cart":
+      import("./cart.js");
+      break;
+    case "rent":
+      import("./rent.js");
+      break;
+    case "view":
+      import("./rent.js");
+      break;
+    default:
+  }
+}
 
 async function fetchMovies(query) {
   let req = new Request(
@@ -29,6 +55,7 @@ async function fetchMovies(query) {
     })
     .then((data) => {
       console.log(data);
+      console.log(JSON.stringify(data));
       return data.results;
     })
     .catch((err) => {
