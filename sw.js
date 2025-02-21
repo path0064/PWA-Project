@@ -9,8 +9,15 @@ const appFiles = [
   "/",
   "/index.html",
   "/cart.html",
+  "/rent.html",
+  "/view.html",
   "/css/main.css",
   "/js/main.js",
+  "/js/fetch.js",
+  "/js/index.js",
+  "/js/cart.js",
+  "/js/rent.js",
+  "/js/view.js",
 ];
 
 self.addEventListener("install", (ev) => {
@@ -19,10 +26,13 @@ self.addEventListener("install", (ev) => {
       cache.addAll(appFiles);
     })
   );
+  self.skipWaiting();
   console.log("service worker installed!");
 });
 
 self.addEventListener("activate", (ev) => {
+  ev.waitUntil(self.clients.claim());
+  console.log("service worker activated!");
   caches.keys().then((cacheList) => {
     return Promise.all(
       cacheList
@@ -130,7 +140,7 @@ function staleWhileRevalidate(ev, cacheName) {
   });
 }
 
-function networkFirstAndRevalidate(ev) {
+async function networkFirstAndRevalidate(ev) {
   //attempt fetch and cache result too
   return fetch(ev.request).then((response) => {
     if (response.status > 0 && !response.ok) return caches.match(ev.request);
@@ -141,6 +151,51 @@ function networkFirstAndRevalidate(ev) {
       return response; //send the fetch response to the web page/script
     });
   });
+}
+
+async function fetchAndCache(ev, cacheName) {
+  return fetch(ev.request).then(async (fetchResponse) => {
+    await caches.open(cacheName).then((cache) => {
+      console.log(ev.request);
+      cache.put(ev.request, fetchResponse.clone());
+      console.log("Added to cache!");
+    });
+    return fetchResponse;
+  });
+}
+
+async function searchFetchAndCache(ev, cacheName) {
+  return fetch(ev.request).then(async (fetchResponse) => {
+    await caches.open(cacheName).then(async (cache) => {
+      let cloneObj = await fetchResponse.clone().json();
+      cloneObj.results.forEach((result) => {
+        let req = new Request(`/movie/${result.id}`);
+        let res = new Response(JSON.stringify(result), {
+          headers: { "Content-Type": "application/json" },
+        });
+        cache.put(req, res);
+      });
+
+      console.log("Added to cache!");
+    });
+    return fetchResponse;
+  });
+}
+
+async function searchCacheOnlyAll(ev, cacheName) {
+  let resultArray = [];
+  await caches.open(cacheName).then(async (cache) => {
+    let keys = await cache.keys();
+    for (let i = keys.length - 1; i > -1; i--) {
+      let match = await cache.match(keys[i]);
+      let result = await match.json();
+      resultArray.push(result);
+    }
+  });
+  let res = new Response(JSON.stringify({ results: resultArray }), {
+    headers: { "Content-Type": "application/json" },
+  });
+  return res;
 }
 
 let isOnline = true;
@@ -172,6 +227,7 @@ self.addEventListener("fetch", (ev) => {
 
   let isAPI = url.hostname.includes("api.themoviedb.org");
   let isAPIImage = url.hostname.includes("image.tmdb.org");
+  let isSearch = url.pathname.includes("search");
   let selfLocation = new URL(self.location);
   //determine if the requested file is from the same origin as your website
   let isRemote = selfLocation.origin !== url.origin;
@@ -179,26 +235,61 @@ self.addEventListener("fetch", (ev) => {
   if (online) {
     //online
     if (isImage && isAPIImage) {
-      ev.respondWith(staleWhileRevalidate(ev, imgCache));
-      console.log({ imgCache });
-      console.log({ appCache });
-    } else if (isAPI) {
-      ev.respondWith(fetchAndCache(ev, appCache));
+      ev.respondWith(networkFirstAndRevalidate(ev, imgCache));
+    } else if (isSearch) {
+      ev.respondWith(searchFetchAndCache(ev, searchCache));
     } else {
-      respondWith(staleWhileRevalidate(ev, appCache));
+      ev.respondWith(staleWhileRevalidate(ev, appCache));
     }
-    ev.respondWith(staleWhileRevalidate(ev, appCache));
+    // ev.respondWith(staleWhileRevalidate(ev, appCache));
   } else {
     //offline
+    console.log("offline");
+    if (isSearch) {
+      console.log("isSearch Offline");
+      ev.respondWith(searchCacheOnlyAll(ev, searchCache));
+    }
     ev.respondWith(cacheOnly(ev));
   }
 });
 
-function fetchAndCache(ev, cacheName) {
-  return fetch(ev.request).then(async (fetchResponse) => {
-    await caches.open(cacheName).then((cache) => {
-      cache.put(ev.request, fetchResponse.clone());
-    });
-    return fetchResponse;
-  });
+async function addToCart(movieId) {
+  console.log("ADD TO CART");
+  let sCache = await caches.open(searchCache);
+  let match = await sCache.match(`/movie/${movieId}`);
+  if (match) {
+    let cCache = await caches.open(cartCache);
+    await cCache.put(`/movie/${movieId}`, match);
+    return true;
+  }
+  return false;
+}
+
+async function removeFromCart(movieId) {
+  console.log("REMOVED FROM CART");
+  let cCache = await caches.open(cartCache);
+  await cCache.delete(`/movie/${movieId}`);
+}
+
+async function checkout() {
+  console.log("checkout!");
+  let cCache = await caches.open(cartCache);
+
+  let matches = await cCache.matchAll();
+  if (matches) {
+    let rCache = await caches.open(rentedCache);
+    for (let match of matches) {
+      let clone = await match.clone().json();
+      await rCache.put(`/movie/${clone.id}`, match);
+      await cCache.delete(`/movie/${clone.id}`);
+    }
+    return true;
+  }
+  return false;
+}
+
+async function watched(movieId) {
+  console.log("REMOVED FROM RENT");
+  let cCache = await caches.open(rentedCache);
+  await cCache.delete(`/movie/${movieId}`);
 }

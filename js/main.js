@@ -16,6 +16,14 @@ function setUpWorker() {
   }
 }
 
+function sendMessage(msg) {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready.then((reg) => {
+      reg.active.postMessage(msg);
+    });
+  }
+}
+
 function pageSpecific() {
   let id = document.body.id; // checks the id of the body element, and then matches the id name to the js file
   switch (id) {
@@ -89,5 +97,3 @@ function createResults(moviesArray) {
   console.log(`from createResults: `);
   console.log(moviesArray);
 }
-
-//test
