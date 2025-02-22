@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="./css/main.css" />
     <script src="./js/main.js" type="module"></script>
   </head>
-  <body>
+  <body id="index-html">
     <header class="navbar">
+      <div class="logo"><img src="./images/Movie-appLogo.svg" /></div>
       <div class="container">
         <nav class="navbar__nav">
           <a href="./cart.html" class="navbar-link">
@@ -16,20 +17,31 @@
               <img src="./images/Cart.svg" />
             </div>
             <div>
-              <p class="cart-text">Cart</p>
+              <p class="cart-label">Cart</p>
             </div>
           </a>
-          <a href="./index.html" class="navbar-link">Home</a>
+          <a href="/index.html" class="navbar-link">Home</a>
           <a href="" class="navbar-link">Rented</a>
         </nav>
       </div>
     </header>
     <main>
-      <h1>Welcome</h1>
-      <form action="./" class="search" id="search-form">
-        <label for="search">Enter movie name:</label>
-        <input type="search" id="search" name="search" />
-      </form>
+      <section class="welcome">
+        <h1 class="welcome__title">Welcome to Cineholic!</h1>
+        <p class="welcome__details">
+          Search, find out information and rent movies all at once!
+        </p>
+
+        <form action="./search.html" class="search" id="search-form">
+          <label for="search"></label>
+          <input
+            class="search-form__input"
+            type="search"
+            id="search"
+            name="search"
+          />
+        </form>
+      </section>
     </main>
   </body>
 </html>
