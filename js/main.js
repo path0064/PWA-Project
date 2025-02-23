@@ -1,8 +1,13 @@
 //IIFE
 (async () => {
   console.log("main.js loaded!");
-  // setUpWorker();
-  // const input = getSearchQuery();
+  setUpWorker();
+
+  if ("serviceWorker" in navigator) {
+    sendMessage({});
+    navigator.serviceWorker.addEventListener("message", gotMessage);
+  }
+
   pageSpecific();
 })();
 
@@ -28,7 +33,7 @@ function pageSpecific() {
       import("./rent.js");
       break;
     case "view-html":
-      import("./rent.js");
+      import("./view.js");
       break;
     default:
   }
@@ -50,5 +55,43 @@ function sendMessage(msg) {
     navigator.serviceWorker.ready.then((reg) => {
       reg.active.postMessage(msg);
     });
+  }
+}
+
+function gotMessage(ev) {
+  //got a message from the service worker
+  if ("action" in ev.data) {
+    if (ev.data.action === "iconCount") {
+      let div = document.querySelector(".cart-icon > div");
+      if (div) {
+        if (ev.data.cartCount > 0) {
+          div.style.display = "block";
+          div.textContent = ev.data.cartCount;
+        } else {
+          div.style.display = "none";
+        }
+      }
+      div = document.querySelector(".rent-icon > div");
+      if (div) {
+        if (ev.data.rentCount > 0) {
+          div.style.display = "block";
+          div.textContent = ev.data.rentCount;
+        } else {
+          div.style.display = "none";
+        }
+      }
+    }
+    if (ev.data.action === "isOnline") {
+      console.log("online or off");
+      let offline = document.querySelector(".offline");
+      console.log(ev.data);
+      if (offline) {
+        if (ev.data.isOnline) {
+          offline.classList.add("inactive");
+        } else {
+          offline.classList.remove("inactive");
+        }
+      }
+    }
   }
 }

@@ -4,28 +4,61 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cineholic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lato:wght@100;400&family=Lustria&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./css/main.css" />
     <script src="./js/main.js" type="module"></script>
+    <link rel="manifest" href="./manifest.json" />
   </head>
   <body id="index-html">
     <header class="navbar">
-      <div class="logo"><img src="./images/Movie-appLogo.svg" /></div>
-      <div class="container">
-        <nav class="navbar__nav">
-          <a href="./cart.html" class="navbar-link">
-            <div class="cart-icon">
-              <img src="./images/Cart.svg" />
-            </div>
-            <div>
-              <p class="cart-label">Cart</p>
-            </div>
-          </a>
-          <a href="/index.html" class="navbar-link">Home</a>
-          <a href="" class="navbar-link">Rented</a>
-        </nav>
+      <div class="logo">
+        <div class="container">
+          <a href="./index.html"><img src="./images/Movie-appLogo.svg" /></a>
+        </div>
       </div>
+      <nav class="navbar__nav">
+        <ul class="navbar__list">
+          <li>
+            <a href="./cart.html" class="navbar-link">
+              <div class="cart-icon">
+                <div></div>
+                <img src="./images/Cart.svg" alt="image displaying cart icon" />
+              </div>
+              <div>
+                <p class="cart-label">Cart</p>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="./index.html" class="navbar-link">
+              <div class="home-icon">
+                <img src="./images/home.svg" alt="image displaying home icon" />
+              </div>
+              <div>
+                <p class="cart-label">Home</p>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="./rent.html" class="navbar-link">
+              <div class="rent-icon">
+                <div></div>
+                <img src="./images/Movie.svg" alt="img displaying rent icon" />
+              </div>
+              <div>
+                <p class="cart-label">Rented</p>
+              </div>
+            </a>
+          </li>
+        </ul>
+      </nav>
     </header>
-    <main>
+    <main class="main">
       <section class="welcome">
         <h1 class="welcome__title">Welcome to Cineholic!</h1>
         <p class="welcome__details">
@@ -43,5 +76,6 @@
         </form>
       </section>
     </main>
+    <div class="offline inactive"></div>
   </body>
 </html>

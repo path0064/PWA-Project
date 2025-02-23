@@ -53,32 +53,33 @@ self.addEventListener("activate", (ev) => {
   });
 });
 
-self.addEventListener("message", (ev) => {
+self.addEventListener("message", async (ev) => {
   if ("action" in ev.data) {
     switch (ev.data.action) {
       case "addToCart":
-        addToCart(ev.data.movieId);
+        await addToCart(ev.data.movieId);
         break;
       case "removeFromCart":
-        removeFromCart(ev.data.movieId);
+        await removeFromCart(ev.data.movieId);
         break;
       case "rent":
-        rent(ev.data.movieId);
+        await rent(ev.data.movieId);
         break;
       case "watched":
-        watched(ev.data.movieId);
+        await watched(ev.data.movieId);
         break;
       case "getCartAll":
-        getCartAll();
+        await getCartAll();
         break;
       case "getRentAll":
-        getRentAll();
+        await getRentAll();
         break;
       case "watch":
-        watch(ev.data.movieId);
-        break;
+        await watch(ev.data.movieId);
     }
   }
+  iconCount();
+  isOnlineFunc();
 });
 
 function sendMessage(msg, clientId) {
@@ -169,7 +170,6 @@ async function fetchAndCache(ev, cacheName) {
     return fetchResponse;
   });
 }
-
 async function searchFetchAndCache(ev, cacheName) {
   return fetch(ev.request).then(async (fetchResponse) => {
     await caches.open(cacheName).then(async (cache) => {
@@ -230,7 +230,6 @@ self.addEventListener("fetch", (ev) => {
     url.pathname.includes(".webp") ||
     url.pathname.includes(".jpeg") ||
     url.hostname.includes("some.external.image.site"); //check file extension or location
-
   let isAPI = url.hostname.includes("api.themoviedb.org");
   let isAPIImage = url.hostname.includes("image.tmdb.org");
   let isSearch = url.pathname.includes("search");
@@ -251,12 +250,12 @@ self.addEventListener("fetch", (ev) => {
   } else {
     //offline
     console.log("offline");
-    if (isSearch) {
+    if (isSearch && isAPI) {
       console.log("isSearch Offline");
       ev.respondWith(searchCacheOnlyAll(ev, searchCache));
     } else {
+      ev.respondWith(cacheOnly(ev));
     }
-    ev.respondWith(cacheOnly(ev));
   }
 });
 
@@ -271,6 +270,7 @@ async function addToCart(movieId) {
     let msg = { action: "addToCartSuccess", movieId: movieId };
     console.log("added!");
     sendMessage(msg);
+    getCartAll();
   }
 }
 
@@ -296,6 +296,7 @@ async function rent(movieId) {
     rCache.put(`/movie/${movieId}`, match);
     let msg = { action: "rentSuccess", movieId: movieId };
     sendMessage(msg);
+    getRentAll();
   }
 }
 
@@ -365,4 +366,43 @@ async function watch(movieId) {
     };
     sendMessage(msg);
   }
+}
+
+// async function rentCount() {
+//   let rCache = await caches.open(rentedCache);
+//   let keys = await rCache.keys();
+//   let msg = {
+//     action: "rentCount",
+//     count: keys.length,
+//   };
+//   sendMessage(msg);
+// }
+
+// async function cartCount() {
+//   let cCache = await caches.open(cartCache);
+//   let keys = await cCache.keys();
+//   let msg = {
+//     action: "cartCount",
+//     count: keys.length,
+//   };
+//   sendMessage(msg);
+// }
+
+async function iconCount() {
+  let cCache = await caches.open(cartCache);
+  let ckeys = await cCache.keys();
+  let rCache = await caches.open(rentedCache);
+  let rkeys = await rCache.keys();
+  let msg = {
+    action: "iconCount",
+    cartCount: ckeys.length,
+    rentCount: rkeys.length,
+  };
+  sendMessage(msg);
+}
+
+function isOnlineFunc() {
+  let online = navigator.onLine && isOnline;
+  let msg = { action: "isOnline", isOnline: online };
+  sendMessage(msg);
 }

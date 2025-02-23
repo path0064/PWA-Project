@@ -23,32 +23,26 @@ function sendMessage(msg) {
 function gotMessage(ev) {
   //got a message from the service worker
   if ("action" in ev.data) {
-    if (ev.data.action === "addToCartSuccess") {
-      // let a = document.querySelector(`a#${ev.data.movieId}`);
-      // a.classList.add("");
-    }
+    // if (ev.data.action === "addToCartSuccess") {
+
+    // }
     if (ev.data.action === "removeFromCartSuccess") {
-      console.log(`removed from cart: ${ev.data.movieId}`);
       let remv = document.getElementById(`remv${ev.data.movieId}`);
       if (remv) {
         document.getElementById(`rent${ev.data.movieId}`).remove();
-        // remv.classList.add("btn-addedToCart")
         remv.textContent = "Removed";
       }
     }
     if (ev.data.action === "rentSuccess") {
-      console.log(`rented: ${ev.data.movieId}`);
       let rent = document.getElementById(`rent${ev.data.movieId}`);
       if (rent) {
         document.getElementById(`remv${ev.data.movieId}`).remove();
-        // remv.classList.add("btn-addedToCart")
         rent.textContent = "Rented";
       }
     }
-    if (ev.data.action === "watchedSuccess") {
-    }
+    // if (ev.data.action === "watchedSuccess") {
+    // }
     if (ev.data.action === "getCartAllSuccess") {
-      console.log;
       movieArray = ev.data.movieArray;
       createCards(movieArray);
     }
@@ -56,58 +50,65 @@ function gotMessage(ev) {
 }
 
 function createCards(movieArray) {
-  console.log(`from createCards: `);
-  let results = movieArray;
+  let emptyMsg = document.querySelector(".empty-msg");
+  if (movieArray.length > 0) {
+    if (emptyMsg) {
+      document.querySelector(".empty-msg").classList.add("inactive");
+    }
+    let frag = document.createDocumentFragment();
+    movieArray.forEach((result) => {
+      let clone = document
+        .getElementById("card-template")
+        .content.cloneNode(true);
 
-  let frag = document.createDocumentFragment();
-  results.forEach((result) => {
-    let clone = document
-      .getElementById("card-template")
-      .content.cloneNode(true);
+      clone.querySelector("div.user-card").id = `movieId${result.id}`;
 
-    clone.querySelector("div.user-card").id = `movieId${result.id}`;
+      // anchor
+      let remove = clone.querySelector("a.btn-remove");
+      remove.setAttribute("id", `remv${result.id}`);
+      remove.addEventListener("click", handleRemoveClick);
 
-    // anchor
-    let remove = clone.querySelector("a.btn-remove");
-    remove.setAttribute("id", `remv${result.id}`);
-    remove.addEventListener("click", handleRemoveClick);
+      let rent = clone.querySelector("a.btn-rent");
+      rent.setAttribute("id", `rent${result.id}`);
+      rent.addEventListener("click", handleRentClick);
+      // images
+      let img = clone.querySelector("div.user-card__img > img");
+      img.addEventListener(
+        "load",
+        async (ev) => {
+          let img = ev.target;
 
-    let rent = clone.querySelector("a.btn-rent");
-    rent.setAttribute("id", `rent${result.id}`);
-    rent.addEventListener("click", handleRentClick);
-    // images
-    let img = clone.querySelector("div.user-card__img > img");
-    img.addEventListener(
-      "load",
-      async (ev) => {
+          img.src = result.poster_path
+            ? "https://image.tmdb.org/t/p/original" + result.poster_path
+            : "/images/placeholderimg.svg";
+          img.alt = `movie poster`;
+        },
+        { once: true }
+      );
+      img.addEventListener("error", (ev) => {
         let img = ev.target;
-
-        img.src = result.poster_path
-          ? "https://image.tmdb.org/t/p/original" + result.poster_path
-          : "/images/placeholderimg.svg";
+        img.src = "/images/placeholderimg.svg";
         img.alt = `movie poster`;
-      },
-      { once: true }
-    );
-    img.addEventListener("error", (ev) => {
-      let img = ev.target;
-      img.src = "/images/placeholderimg.svg";
-      img.alt = `movie poster`;
+      });
+      // name
+      clone.querySelector("h3.user-card__name").textContent =
+        result.original_title;
+      // rating
+      clone.querySelector("p.user-card__rating").textContent += ` ${
+        Math.round(result.vote_average * 10) / 10
+      }/10`;
+      clone.querySelector("p.user-card__description").textContent =
+        result.overview;
+      frag.append(clone);
     });
-    // name
-    clone.querySelector("h3.user-card__name").textContent =
-      result.original_title;
-    // rating
-    clone.querySelector("p.user-card__rating").textContent += ` ${
-      Math.round(result.vote_average * 10) / 10
-    }/10`;
-    clone.querySelector("p.user-card__description").textContent =
-      result.overview;
-    frag.append(clone);
-  });
-  let ul = document.querySelector("ul.user-card__list");
-  ul.innerHTML = "";
-  ul.append(frag);
+    let ul = document.querySelector("ul.user-card__list");
+    ul.innerHTML = "";
+    ul.append(frag);
+  } else {
+    if (emptyMsg) {
+      emptyMsg.classList.remove("inactive");
+    }
+  }
 }
 
 function getMovieArray() {

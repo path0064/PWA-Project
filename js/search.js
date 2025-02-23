@@ -12,7 +12,7 @@ let keyword;
   }
 
   let moviesArray = await fetchMoviesReturnMovieArray(keyword);
-  createResults(moviesArray);
+  createCards(moviesArray);
 })();
 
 async function handleSearchSubmit(ev) {
@@ -28,7 +28,7 @@ async function handleSearchSubmit(ev) {
 
   let moviesArray = await fetchMoviesReturnMovieArray(keyword);
 
-  createResults(moviesArray);
+  createCards(moviesArray);
 }
 
 async function fetchMoviesReturnMovieArray(query) {
@@ -50,7 +50,6 @@ async function fetchMoviesReturnMovieArray(query) {
       return res.json();
     })
     .then((data) => {
-      console.log(data);
       return data.results;
     })
     .catch((err) => {
@@ -61,24 +60,21 @@ async function fetchMoviesReturnMovieArray(query) {
 
 function setSearchValue() {
   let url = new URL(location.href);
-  keyword = url.searchParams.get("search") || "a";
+  keyword = url.searchParams.get("search") || "";
   document.getElementById("search").value = keyword;
 }
 
-function createResults(movieArray) {
-  console.log(`from createResults: `);
-  let results = movieArray;
-  // results.forEach((res) => console.log(res))
-  console.log(document.getElementById("card-template"));
-
+function createCards(movieArray) {
   let frag = document.createDocumentFragment();
-  results.forEach((result) => {
+  movieArray.forEach((result) => {
     let clone = document
       .getElementById("card-template")
       .content.cloneNode(true);
+
+    clone.querySelector("div.user-card").id = `movieId${result.id}`;
     // anchor
-    let a = clone.querySelector("a.user-card");
-    a.setAttribute("id", result.id);
+    let a = clone.querySelector("a.btn-cart");
+    a.id = `cart${result.id}`;
     a.addEventListener("click", handleResultClick);
     // images
     let img = clone.querySelector("div.user-card__img > img");
@@ -120,7 +116,7 @@ function handleResultClick(ev) {
   let a = ev.currentTarget;
   let msg = {
     action: "addToCart",
-    movieId: a.id,
+    movieId: a.id.substring(4),
   };
   sendMessage(msg);
 }
@@ -138,14 +134,18 @@ function gotMessage(ev) {
   //got a message from the service worker
   if ("action" in ev.data) {
     if (ev.data.action === "addToCartSuccess") {
-      let a = document.querySelector(`a#${ev.data.movieId}`);
-      a.classList.add("");
+      console.log(`added to cart: ${ev.data.movieId}`);
+      let a = document.querySelector(`#cart${ev.data.movieId}`);
+      if (a) {
+        a.classList.add("btn-addedToCart");
+        a.textContent = "Added to cart";
+      }
     }
-    if (ev.data.action === "removeFromCartSuccess") {
-    }
-    if (ev.data.action === "checkoutSuccess") {
-    }
-    if (ev.data.action === "watchedSuccess") {
-    }
+    // if (ev.data.action === "removeFromCartSuccess") {
+    // }
+    // if (ev.data.action === "checkoutSuccess") {
+    // }
+    // if (ev.data.action === "watchedSuccess") {
+    // }
   }
 }

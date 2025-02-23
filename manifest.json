@@ -1,0 +1,18 @@
+{
+  "name": "Cineholic",
+  "start_url": "./index.html",
+  "display": "minimal-ui",
+  "icons": [
+    {
+      "src": "./images/192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./images/512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "orientation": "portrait-primary"
+}
