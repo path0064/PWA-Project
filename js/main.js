@@ -1,11 +1,7 @@
-import token from "./apikey.js";
-
 //IIFE
 (async () => {
   console.log("main.js loaded!");
-  setUpWorker();
-  let searchForm = document.getElementById("search-form");
-  if (searchForm) searchForm.addEventListener("submit", handleSearchSubmit);
+  // setUpWorker();
   // const input = getSearchQuery();
   pageSpecific();
 })();
@@ -16,60 +12,26 @@ function setUpWorker() {
   }
 }
 
-function sendMessage(msg) {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.active.postMessage(msg);
-    });
-  }
-}
-
 function pageSpecific() {
   let id = document.body.id; // checks the id of the body element, and then matches the id name to the js file
   switch (id) {
-    case "home":
+    case "index-html":
       import("./index.js");
       break;
-    case "cart":
+    case "search-html":
+      import("./search.js");
+      break;
+    case "cart-html":
       import("./cart.js");
       break;
-    case "rent":
+    case "rent-html":
       import("./rent.js");
       break;
-    case "view":
+    case "view-html":
       import("./rent.js");
       break;
     default:
   }
-}
-
-async function fetchMovies(query) {
-  let req = new Request(
-    `https://api.themoviedb.org/3/search/collection?query=${query}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  let res = await fetch(req)
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("There was an error fetching the movie");
-      }
-      return res.json();
-    })
-    .then((data) => {
-      console.log(data);
-      console.log(JSON.stringify(data));
-      return data.results;
-    })
-    .catch((err) => {
-      console.error(err.message);
-    });
-  if (res) return res;
 }
 
 // function getSearchQuery() {
@@ -82,18 +44,11 @@ async function fetchMovies(query) {
 //   return input;
 // }
 
-async function handleSearchSubmit(ev) {
-  console.log("search submitted!");
-  ev.preventDefault();
-  let search = document.getElementById("search");
-  let keyword = search.value;
-
-  let moviesArray = await fetchMovies(keyword);
-
-  createResults(moviesArray);
-}
-
-function createResults(moviesArray) {
-  console.log(`from createResults: `);
-  console.log(moviesArray);
+function sendMessage(msg) {
+  //send a message to the service worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready.then((reg) => {
+      reg.active.postMessage(msg);
+    });
+  }
 }
