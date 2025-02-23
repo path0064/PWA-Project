@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cineholic</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; 
+               img-src 'self' data: https://image.tmdb.org; 
+               script-src 'self' https://apis.google.com; 
+               style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; 
+               font-src 'self' https://fonts.gstatic.com; 
+               connect-src 'self' https://api.themoviedb.org;"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,13 +22,14 @@
     />
     <link rel="stylesheet" href="./css/main.css" />
     <script src="./js/main.js" type="module"></script>
-    <link rel="manifest" href="./manifest.json" />
   </head>
   <body id="rent-html">
     <header class="navbar">
       <div class="logo">
         <div class="container">
-          <a href="./index.html"><img src="./images/Movie-appLogo.svg" /></a>
+          <a href="./index.html"
+            ><img src="./images/Movie-appLogo.svg" alt="displaying the logo"
+          /></a>
         </div>
       </div>
       <nav class="navbar__nav">
@@ -59,25 +70,13 @@
       </nav>
     </header>
     <main>
-      <!-- <div class="search-container">
-          <form action="./search.html" class="search" id="search-form">
-            <label for="search"></label>
-
-            <input
-              class="search-form__input search-form__input-modifier"
-              type="search"
-              id="search"
-              name="search"
-            />
-          </form>
-        </div> -->
       <section>
         <div class="container">
           <h2 class="rent-title">Rented</h2>
           <ul class="user-card__list"></ul>
         </div>
       </section>
-      <section class="empty-msg">
+      <section class="empty-msg inactive">
         <p>Looks like you haven't added anything yet.</p>
         <img src="./images/rents-empty.svg" alt="empty cart" />
         <a href="./index.html" class="btn btn-watched">Continue Browsing</a>

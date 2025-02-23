@@ -41,56 +41,66 @@ function sendMessage(msg) {
     });
   }
 }
-
 function fillInfo(movieInfo) {
-  document.querySelector(".movie__title").textContent =
-    movieInfo.original_title;
+  let emptyMsg = document.querySelector(".empty-msg");
+  if (movieInfo) {
+    emptyMsg.classList.add("inactive");
 
-  let genreIds = movieInfo.genre_ids;
-  let genreFrag = document.createDocumentFragment();
-  genreIds.forEach((id) => {
-    let span = document.createElement("span");
-    span.className = "movie__genre";
-    span.textContent = getGenre(id);
-    genreFrag.append(span);
-  });
-  document.querySelector(".movie__genre-list").append(genreFrag);
+    document.querySelector(".movie__title").textContent =
+      movieInfo.original_title;
 
-  let rating = Math.round(movieInfo.vote_average);
-  let fullStars = Math.floor(rating / 2);
-  let halfStar = rating % 10;
-  let emptyStar = 10 - Math.ceil(rating / 2);
-  let rateFrag = document.createDocumentFragment();
-  for (let i = 0; i < fullStars; i++) {
-    let img = document.createElement("img");
-    img.src = "./images/full-star.svg";
-    rateFrag.append(img);
+    let genreIds = movieInfo.genre_ids;
+    let genreFrag = document.createDocumentFragment();
+    genreIds.forEach((id) => {
+      let span = document.createElement("span");
+      span.className = "movie__genre";
+      span.textContent = getGenre(id);
+      genreFrag.append(span);
+    });
+    document.querySelector(".movie__genre-list").append(genreFrag);
+
+    let rating = Math.round(movieInfo.vote_average);
+    let fullStars = Math.floor(rating / 2);
+    let halfStar = rating % 10;
+    let emptyStar = 10 - Math.ceil(rating / 2);
+    let rateFrag = document.createDocumentFragment();
+    for (let i = 0; i < fullStars; i++) {
+      let img = document.createElement("img");
+      img.src = "./images/full-star.svg";
+      rateFrag.append(img);
+    }
+    if (halfStar) {
+      let img = document.createElement("img");
+      img.src = "./images/half-star.svg";
+      rateFrag.append(img);
+    }
+    if (emptyStar) {
+      let img = document.createElement("img");
+      img.src = "./images/empty-star.svg";
+      rateFrag.append(img);
+    }
+    let p = document.createElement("p");
+    p.className = "no-of-ratings";
+    p.textContent = `(${movieInfo.vote_count}) reviews`;
+    rateFrag.append(p);
+    document.querySelector(".ratings").append(rateFrag);
+
+    let sum = document.querySelector(".movie__summary > p");
+    sum.textContent = movieInfo.overview;
+
+    document.querySelector(
+      ".movie-details__list .adults .info__text--normal"
+    ).textContent = movieInfo.adult ? " Yes" : " No";
+    document.querySelector(
+      ".movie-details__list .release .info__text--normal"
+    ).textContent = ` ${movieInfo.release_date}`;
+
+    document.querySelector(".view.container").classList.remove("inactive");
+  } else {
+    if (emptyMsg) {
+      emptyMsg.classList.remove("inactive");
+    }
   }
-  if (halfStar) {
-    let img = document.createElement("img");
-    img.src = "./images/half-star.svg";
-    rateFrag.append(img);
-  }
-  if (emptyStar) {
-    let img = document.createElement("img");
-    img.src = "./images/empty-star.svg";
-    rateFrag.append(img);
-  }
-  let p = document.createElement("p");
-  p.className = "no-of-ratings";
-  p.textContent = `(${movieInfo.vote_count}) reviews`;
-  rateFrag.append(p);
-  document.querySelector(".ratings").append(rateFrag);
-
-  let sum = document.querySelector(".movie__summary > p");
-  sum.textContent = movieInfo.overview;
-
-  document.querySelector(
-    ".movie-details__list .adults .info__text--normal"
-  ).textContent = movieInfo.adult ? " Yes" : " No";
-  document.querySelector(
-    ".movie-details__list .release .info__text--normal"
-  ).textContent = ` ${movieInfo.release_date}`;
 }
 
 function getMovie() {
@@ -109,6 +119,7 @@ function gotMessage(ev) {
   if ("action" in ev.data) {
     if (ev.data.action === "watchSuccess") {
       movieInfo = ev.data.movieInfo;
+
       fillInfo(movieInfo);
     }
     if (ev.data.action === "watchedSuccess") {

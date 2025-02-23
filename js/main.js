@@ -22,6 +22,7 @@ function pageSpecific() {
   switch (id) {
     case "index-html":
       import("./index.js");
+      // import("./search.js");
       break;
     case "search-html":
       import("./search.js");
@@ -38,16 +39,6 @@ function pageSpecific() {
     default:
   }
 }
-
-// function getSearchQuery() {
-//   let searchField = document.getElementById("search");
-//   let url = new URL(location.href);
-//   let input = url.searchParams.get("search");
-//   if (input) {
-//     searchField.value = input;
-//   }
-//   return input;
-// }
 
 function sendMessage(msg) {
   //send a message to the service worker
@@ -82,9 +73,7 @@ function gotMessage(ev) {
       }
     }
     if (ev.data.action === "isOnline") {
-      console.log("online or off");
       let offline = document.querySelector(".offline");
-      console.log(ev.data);
       if (offline) {
         if (ev.data.isOnline) {
           offline.classList.add("inactive");

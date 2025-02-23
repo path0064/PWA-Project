@@ -1,4 +1,4 @@
-const version = 1;
+const version = 3;
 const appCache = "movie:cineholic_" + version;
 const cartCache = "movie:cart_" + version;
 const rentedCache = "movie:rented_" + version;
@@ -8,18 +8,39 @@ const searchCache = "movie:search_" + version;
 const appFiles = [
   "/",
   "/index.html",
-  "/search.html",
+  // "/search.html",
   "/cart.html",
   "/rent.html",
   "/view.html",
   "/css/main.css",
   "/js/main.js",
-  "/js/search.js",
-  "/js/fetch.js",
+  // "/js/search.js",
+  // "/js/fetch.js",
   "/js/index.js",
   "/js/cart.js",
   "/js/rent.js",
   "/js/view.js",
+  // "/videos/placeholder-vid.mp4",
+  "/videos/placeholdervid.mp4",
+  "/images/Searchicon2.svg",
+  // "/images/Search.svg",
+  "/images/search-icons.svg",
+  // "/images/search-icon.svg",
+  "/images/s-l1200.jpg",
+  // "/images/ri_search-line.svg",
+  "/images/rents-empty.svg",
+  "/images/placeholderimg.svg",
+  "/images/offline-warning.svg",
+  "/images/Movie.svg",
+  "/images/Movie-appLogo.svg",
+  "/images/Home.svg",
+  "/images/half-star.svg",
+  "/images/full-star.svg",
+  "/images/empty-star.svg",
+  "/images/empty-cart.svg",
+  "/images/Cart.svg",
+  "/images/512.png",
+  "/images/192.png",
 ];
 
 self.addEventListener("install", (ev) => {
@@ -137,12 +158,21 @@ function networkFirst(ev) {
 function staleWhileRevalidate(ev, cacheName) {
   //return cache then fetch and save latest fetch
   return caches.match(ev.request).then((cacheResponse) => {
-    let fetchResponse = fetch(ev.request).then((response) => {
-      return caches.open(cacheName).then((cache) => {
-        cache.put(ev.request, response.clone());
-        return response;
+    let fetchResponse = fetch(ev.request)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("There was an error fetching the response,");
+        }
+        return res;
+      })
+      .then((response) => {
+        return caches.open(cacheName).then((cache) => {
+          cache.put(ev.request, response.clone()).catch((err) => {
+            throw new Error("There was an error caching the response", err);
+          });
+          return response;
+        });
       });
-    });
     return cacheResponse || fetchResponse;
   });
 }
@@ -163,13 +193,12 @@ async function networkFirstAndRevalidate(ev, cacheName) {
 async function fetchAndCache(ev, cacheName) {
   return fetch(ev.request).then(async (fetchResponse) => {
     await caches.open(cacheName).then((cache) => {
-      console.log(ev.request);
       cache.put(ev.request, fetchResponse.clone());
-      console.log("Added to cache!");
     });
     return fetchResponse;
   });
 }
+
 async function searchFetchAndCache(ev, cacheName) {
   return fetch(ev.request).then(async (fetchResponse) => {
     await caches.open(cacheName).then(async (cache) => {
@@ -181,8 +210,6 @@ async function searchFetchAndCache(ev, cacheName) {
         });
         cache.put(req, res);
       });
-      // cache.put(ev.request, fetchResponse.clone());
-      console.log("Added to cache!");
     });
     return fetchResponse;
   });
@@ -236,6 +263,13 @@ self.addEventListener("fetch", (ev) => {
   let selfLocation = new URL(self.location);
   //determine if the requested file is from the same origin as your website
   let isRemote = selfLocation.origin !== url.origin;
+  let isGoogle =
+    url.hostname.includes("apis.google.com") ||
+    url.hostname.includes("fonts.googleapis.com") ||
+    url.hostname.includes("fonts.gstatic.com");
+  if (isGoogle) {
+    console.log(url);
+  }
 
   if (online) {
     online;
@@ -243,15 +277,15 @@ self.addEventListener("fetch", (ev) => {
       ev.respondWith(networkFirstAndRevalidate(ev, imagesCache));
     } else if (isSearch && isAPI) {
       ev.respondWith(searchFetchAndCache(ev, searchCache));
+    } else if (isGoogle) {
+      ev.respondWith(fetchAndCache(ev, appCache));
     } else {
       // ev.respondWith(networkOnly(ev));
       ev.respondWith(staleWhileRevalidate(ev, appCache));
     }
   } else {
     //offline
-    console.log("offline");
     if (isSearch && isAPI) {
-      console.log("isSearch Offline");
       ev.respondWith(searchCacheOnlyAll(ev, searchCache));
     } else {
       ev.respondWith(cacheOnly(ev));
@@ -260,7 +294,6 @@ self.addEventListener("fetch", (ev) => {
 });
 
 async function addToCart(movieId) {
-  console.log("ADD TO CART");
   let sCache = await caches.open(searchCache);
   let match = await sCache.match(`/movie/${movieId}`);
   if (match) {
@@ -268,14 +301,12 @@ async function addToCart(movieId) {
     await cCache.put(`/movie/${movieId}`, match);
 
     let msg = { action: "addToCartSuccess", movieId: movieId };
-    console.log("added!");
     sendMessage(msg);
     getCartAll();
   }
 }
 
 async function removeFromCart(movieId) {
-  console.log("REMOVED FROM CART");
   let cCache = await caches.open(cartCache);
   let test = await cCache.delete(`/movie/${movieId}`);
   if (test) {
@@ -285,7 +316,6 @@ async function removeFromCart(movieId) {
 }
 
 async function rent(movieId) {
-  console.log("rent!");
   let cCache = await caches.open(cartCache);
   let rCache = await caches.open(rentedCache);
 
@@ -301,7 +331,6 @@ async function rent(movieId) {
 }
 
 async function watched(movieId) {
-  console.log("REMOVED FROM RENT");
   let rCache = await caches.open(rentedCache);
   let test = await rCache.delete(`/movie/${movieId}`);
 
@@ -315,7 +344,6 @@ async function watched(movieId) {
 }
 
 async function getCartAll() {
-  console.log("getting all in cart!");
   let cCache = await caches.open(cartCache);
 
   let matches = await cCache.matchAll();
@@ -335,7 +363,6 @@ async function getCartAll() {
 }
 
 async function getRentAll() {
-  console.log("getting all in cart!");
   let rCache = await caches.open(rentedCache);
 
   let matches = await rCache.matchAll();
@@ -355,38 +382,23 @@ async function getRentAll() {
 }
 
 async function watch(movieId) {
-  console.log("watchin!");
   let rCache = await caches.open(rentedCache);
   let match = await rCache.match(`/movie/${movieId}`);
+  let msg;
   if (match) {
     let movie = await match.json();
-    let msg = {
+    msg = {
       action: "watchSuccess",
       movieInfo: movie,
     };
-    sendMessage(msg);
+  } else {
+    msg = {
+      action: "watchSuccess",
+      movieInfo: 0,
+    };
   }
+  sendMessage(msg);
 }
-
-// async function rentCount() {
-//   let rCache = await caches.open(rentedCache);
-//   let keys = await rCache.keys();
-//   let msg = {
-//     action: "rentCount",
-//     count: keys.length,
-//   };
-//   sendMessage(msg);
-// }
-
-// async function cartCount() {
-//   let cCache = await caches.open(cartCache);
-//   let keys = await cCache.keys();
-//   let msg = {
-//     action: "cartCount",
-//     count: keys.length,
-//   };
-//   sendMessage(msg);
-// }
 
 async function iconCount() {
   let cCache = await caches.open(cartCache);

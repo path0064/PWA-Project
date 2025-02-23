@@ -244,7 +244,8 @@ h6 {
   padding-inline-start: 1.5rem;
 }
 
-main > section > .container {
+main > section > .container,
+.view {
   padding-bottom: 6rem;
 }
 
@@ -288,11 +289,16 @@ main > section > .container {
   margin-top: 0rem;
   padding-inline: 1rem;
   text-align: center;
+  gap: 1rem;
 }
 
 .empty-msg > p {
   color: white;
   font-size: 1.5rem;
+}
+
+#view-html .empty-msg {
+  margin-top: 8rem;
 }
 
 .search-form__input {
@@ -307,8 +313,7 @@ main > section > .container {
   background-position-y: center;
   background-size: 1.8em;
   background-position-x: 1em;
-  padding-inline-start: 3.5em;
-  padding-inline-end: 2em;
+  padding-left: 3em;
 }
 
 .search-form__input-modifier {
@@ -605,6 +610,12 @@ nav a {
   padding-block-end: 0.5rem;
 }
 
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .movie {
   color: white;
   display: flex;
@@ -617,6 +628,7 @@ nav a {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  text-align: center;
 }
 
 .movie-player {
@@ -624,7 +636,6 @@ nav a {
 }
 
 .movie__summary {
-  border-top: 0.1rem solid rgba(170, 170, 170, 40%);
 }
 
 .movie__genre-list {
@@ -633,11 +644,12 @@ nav a {
 }
 
 .movie__genre {
-  background-color: #1b1919;
+  background-color: #211f1f;
   color: white;
+  border-color: 0.1rem solid white;
   border-radius: 1.5rem;
-  padding-inline: 1rem;
-  padding-block: 0.5rem;
+  padding: 0.3rem;
+  max-height: max-content;
 }
 
 .ratings {
@@ -656,13 +668,18 @@ nav a {
 }
 
 .movie-details {
-  border-top: 0.1rem solid rgba(170, 170, 170, 40%);
-  border-bottom: 0.1rem solid rgba(170, 170, 170, 40%);
+  display: flex;
+  flex-direction: column;
 }
 
 .movie-details__list {
   list-style-type: none;
   padding-inline-start: 0;
+}
+
+.info__text--bold {
+  font-weight: bold;
+  color: #9097a6;
 }
 
 @container card (min-width: 25rem) {
@@ -702,6 +719,14 @@ nav a {
   .user-card__list {
     grid-template-columns: 1fr 1fr 1fr;
   }
+
+  .search-form__input-modifier {
+    margin-top: 2rem;
+  }
+
+  .user-card__list {
+    margin-top: 1.6rem;
+  }
 }
 
 @media only screen and (min-width: 65em) {
@@ -719,6 +744,13 @@ nav a {
 
   .movie > .details {
     flex: 1;
+  }
+
+  .movie-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 
