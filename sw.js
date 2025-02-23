@@ -8,11 +8,13 @@ const searchCache = "movie:search_" + version;
 const appFiles = [
   "/",
   "/index.html",
+  "/search.html",
   "/cart.html",
   "/rent.html",
   "/view.html",
   "/css/main.css",
   "/js/main.js",
+  "/js/search.js",
   "/js/fetch.js",
   "/js/index.js",
   "/js/cart.js",
@@ -53,12 +55,6 @@ self.addEventListener("activate", (ev) => {
 
 self.addEventListener("message", (ev) => {
   if ("action" in ev.data) {
-    // if (ev.data.action == "addToCart") {
-
-    // }
-    // if (ev.data.action == "removeFromCart") {
-
-    // }
     switch (ev.data.action) {
       case "addToCart":
         addToCart(ev.data.movieId);
@@ -66,17 +62,27 @@ self.addEventListener("message", (ev) => {
       case "removeFromCart":
         removeFromCart(ev.data.movieId);
         break;
-      case "checkout":
-        checkout();
+      case "rent":
+        rent(ev.data.movieId);
         break;
       case "watched":
         watched(ev.data.movieId);
+        break;
+      case "getCartAll":
+        getCartAll();
+        break;
+      case "getRentAll":
+        getRentAll();
+        break;
+      case "watch":
+        watch(ev.data.movieId);
         break;
     }
   }
 });
 
 function sendMessage(msg, clientId) {
+  //client is falsey means send to all
   if (clientId) {
     self.clients
       .get(clientId)
@@ -140,9 +146,9 @@ function staleWhileRevalidate(ev, cacheName) {
   });
 }
 
-async function networkFirstAndRevalidate(ev) {
+async function networkFirstAndRevalidate(ev, cacheName) {
   //attempt fetch and cache result too
-  return fetch(ev.request).then((response) => {
+  return fetch(ev.request).then(async (response) => {
     if (response.status > 0 && !response.ok) return caches.match(ev.request);
     //accept opaque responses with status code 0
     //still save a copy
@@ -175,7 +181,7 @@ async function searchFetchAndCache(ev, cacheName) {
         });
         cache.put(req, res);
       });
-
+      // cache.put(ev.request, fetchResponse.clone());
       console.log("Added to cache!");
     });
     return fetchResponse;
@@ -233,21 +239,22 @@ self.addEventListener("fetch", (ev) => {
   let isRemote = selfLocation.origin !== url.origin;
 
   if (online) {
-    //online
+    online;
     if (isImage && isAPIImage) {
-      ev.respondWith(networkFirstAndRevalidate(ev, imgCache));
-    } else if (isSearch) {
+      ev.respondWith(networkFirstAndRevalidate(ev, imagesCache));
+    } else if (isSearch && isAPI) {
       ev.respondWith(searchFetchAndCache(ev, searchCache));
     } else {
+      // ev.respondWith(networkOnly(ev));
       ev.respondWith(staleWhileRevalidate(ev, appCache));
     }
-    // ev.respondWith(staleWhileRevalidate(ev, appCache));
   } else {
     //offline
     console.log("offline");
     if (isSearch) {
       console.log("isSearch Offline");
       ev.respondWith(searchCacheOnlyAll(ev, searchCache));
+    } else {
     }
     ev.respondWith(cacheOnly(ev));
   }
@@ -260,36 +267,102 @@ async function addToCart(movieId) {
   if (match) {
     let cCache = await caches.open(cartCache);
     await cCache.put(`/movie/${movieId}`, match);
-    return true;
+
+    let msg = { action: "addToCartSuccess", movieId: movieId };
+    console.log("added!");
+    sendMessage(msg);
   }
-  return false;
 }
 
 async function removeFromCart(movieId) {
   console.log("REMOVED FROM CART");
   let cCache = await caches.open(cartCache);
-  await cCache.delete(`/movie/${movieId}`);
+  let test = await cCache.delete(`/movie/${movieId}`);
+  if (test) {
+    let msg = { action: "removeFromCartSuccess", movieId: movieId };
+    sendMessage(msg);
+  }
 }
 
-async function checkout() {
-  console.log("checkout!");
+async function rent(movieId) {
+  console.log("rent!");
   let cCache = await caches.open(cartCache);
+  let rCache = await caches.open(rentedCache);
 
-  let matches = await cCache.matchAll();
-  if (matches) {
-    let rCache = await caches.open(rentedCache);
-    for (let match of matches) {
-      let clone = await match.clone().json();
-      await rCache.put(`/movie/${clone.id}`, match);
-      await cCache.delete(`/movie/${clone.id}`);
-    }
-    return true;
+  let match = await cCache.match(`/movie/${movieId}`);
+
+  if (match) {
+    cCache.delete(`/movie/${movieId}`);
+    rCache.put(`/movie/${movieId}`, match);
+    let msg = { action: "rentSuccess", movieId: movieId };
+    sendMessage(msg);
   }
-  return false;
 }
 
 async function watched(movieId) {
   console.log("REMOVED FROM RENT");
-  let cCache = await caches.open(rentedCache);
-  await cCache.delete(`/movie/${movieId}`);
+  let rCache = await caches.open(rentedCache);
+  let test = await rCache.delete(`/movie/${movieId}`);
+
+  if (test) {
+    let msg = {
+      action: "watchedSuccess",
+      movieId: movieId,
+    };
+    sendMessage(msg);
+  }
+}
+
+async function getCartAll() {
+  console.log("getting all in cart!");
+  let cCache = await caches.open(cartCache);
+
+  let matches = await cCache.matchAll();
+  let movieArray = [];
+  if (matches) {
+    for (let match of matches) {
+      let movie = await match.json();
+      movieArray.push(movie);
+    }
+    let msg = {
+      action: "getCartAllSuccess",
+      movieArray: movieArray,
+      length: movieArray.length,
+    };
+    sendMessage(msg);
+  }
+}
+
+async function getRentAll() {
+  console.log("getting all in cart!");
+  let rCache = await caches.open(rentedCache);
+
+  let matches = await rCache.matchAll();
+  let movieArray = [];
+  if (matches) {
+    for (let match of matches) {
+      let movie = await match.json();
+      movieArray.push(movie);
+    }
+    let msg = {
+      action: "getRentAllSuccess",
+      movieArray: movieArray,
+      length: movieArray.length,
+    };
+    sendMessage(msg);
+  }
+}
+
+async function watch(movieId) {
+  console.log("watchin!");
+  let rCache = await caches.open(rentedCache);
+  let match = await rCache.match(`/movie/${movieId}`);
+  if (match) {
+    let movie = await match.json();
+    let msg = {
+      action: "watchSuccess",
+      movieInfo: movie,
+    };
+    sendMessage(msg);
+  }
 }
