@@ -20,7 +20,7 @@ const appFiles = [
   "/js/cart.js",
   "/js/rent.js",
   "/js/view.js",
-  // "/videos/placeholder-vid.mp4",
+  "/videos/placeholder-vid.mp4",
   "/videos/placeholdervid.mp4",
   "/images/Searchicon2.svg",
   // "/images/Search.svg",
